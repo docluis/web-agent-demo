@@ -13,8 +13,6 @@ class Config:
         self.service = ChromeService(executable_path=self.chromedriver_path)
         self.options = ChromeOptions()
         self.options.add_argument("--lang=en")
-        if self.args.headless:
-            self.options.add_argument("--headless=new")
         self.driver = webdriver.Chrome(service=self.service, options=self.options)
 
         # LLM

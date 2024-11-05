@@ -5,3 +5,4 @@ langchain-anthropic
 langgraph
 pydantic
 python-dotenv
+bs4
