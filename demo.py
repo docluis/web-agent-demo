@@ -1,5 +1,10 @@
 from config import Config
+from src.interaction_agent.agent import InteractionAgent
+from src.llm.api_parser import LLM_ApiParser
 
-config = Config()
+target = "https://demoqa.com/webtables"
 
-prompt = "Buy a bike light on saucedemo.com. Your login credentials are: standard_user, secret_sauce."
+config = Config(target)
+agent = InteractionAgent(cf=config, llm_page_request_parser=LLM_ApiParser(config))
+
+agent.interact(uri="/webtables", interaction="Coworker Table", limit="1")
