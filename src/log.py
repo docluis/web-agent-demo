@@ -1,4 +1,6 @@
 import logging
+import warnings
+from langchain_core._api.beta_decorator import LangChainBetaWarning
 
 # Write to log and console
 logging.basicConfig(
@@ -15,3 +17,5 @@ logging.getLogger('httpx').setLevel(logging.ERROR)
 logging.getLogger('httpcore').setLevel(logging.ERROR)
 logging.getLogger('urllib3.connectionpool').setLevel(logging.ERROR)
 logging.getLogger('openai._base_client').setLevel(logging.ERROR)
+
+warnings.filterwarnings("ignore", category=LangChainBetaWarning)
