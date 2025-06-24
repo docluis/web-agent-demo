@@ -117,18 +117,10 @@ AnyOutput = Union[
 ]
 
 
-class HighHighLevelPlan(BaseModel):
-    """High-level plan for testing an interaction feature."""
-
-    approaches: List[str] = Field(
-        description="Different approaches to test an interaction feature, should be in sorted order. Pay attention to the specified limit of approaches."
-    )
-
-
 class PlanModel(BaseModel):
     """Model for representing the plan for a single approach."""
 
-    approach: str = Field(description="The approach for the interaction feature.")
+    phase: str = Field(description="The phase of the flow to be tested.")
     plan: List[str] = Field(description="The step-by-step plan for this approach. As a List")
 
 

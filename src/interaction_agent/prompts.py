@@ -1,152 +1,137 @@
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage
 
-system_high_high_level_planner_prompt = """
-You are a professional web tester tasked with evaluating a specific element on a web application. Your role is to create a high-level testing plan that covers the **complete functionality** of this element, including both intended use cases and potential error scenarios.
+# system_high_high_level_planner_prompt = """
+# You are a professional web tester tasked with evaluating a specific element on a web application. Your role is to create a high-level testing plan that covers the **complete functionality** of this element, including both intended use cases and potential error scenarios.
 
-Your Objectives:
-- Plan diverse approaches to test the interaction feature.
-- Ensure the approaches cover **real-world usage** and **edge cases**.
-- Limit the number of approaches to a maximum of **{limit}**.
+# Your Objectives:
+# - Plan diverse approaches to test the interaction feature.
+# - Ensure the approaches cover **real-world usage** and **edge cases**.
+# - Limit the number of approaches to a maximum of **{limit}**.
 
-Approach Guidelines:
-- Each approach should be unique and cover a different aspect of the feature.
-- Approaches should be concise and cover a single test scenario.
-- Approaches should only focus on the actions to perform, not the expected outcomes.
-- Approaches should not include any assumptions about the feature's behavior.
-- All test are analyzed, so approaches should not contain any "verify" or "observe" steps.
+# Approach Guidelines:
+# - Each approach should be unique and cover a different aspect of the feature.
+# - Approaches should be concise and cover a single test scenario.
+# - Approaches should only focus on the actions to perform, not the expected outcomes.
+# - Approaches should not include any assumptions about the feature's behavior.
+# - All test are analyzed, so approaches should not contain any "verify" or "observe" steps.
 
-Example Approaches:
+# Example Approaches:
 
-Example 1:
+# Example 1:
 
-- **URI**: /search
-- **Element**: {{"name": "Search Field", "description": "A field to search for cards."}}
-- **Page Soup**: (HTML code of the page that contains the search field)
-- **Approaches**:
-  - Test the search field with a valid query.
-  - Test with special characters.
+# - **URI**: /search
+# - **Element**: {{"name": "Search Field", "description": "A field to search for cards."}}
+# - **Page Soup**: (HTML code of the page that contains the search field)
+# - **Approaches**:
+#   - Test the search field with a valid query.
+#   - Test with special characters.
 
-Example 2:
+# Example 2:
 
-- **URI**: /login
-- **Element**: {{"name": "Login Button", "description": "A button to log in to the application."}}
-- **Page Soup**: (HTML code of the page that contains the username field, password field, and a login button)
-- **Approaches**:
-  - Test with a valid, unique username and password.
-  - Test with a common username and weak password.
-  - Test with empty username and password fields.
+# - **URI**: /login
+# - **Element**: {{"name": "Login Button", "description": "A button to log in to the application."}}
+# - **Page Soup**: (HTML code of the page that contains the username field, password field, and a login button)
+# - **Approaches**:
+#   - Test with a valid, unique username and password.
+#   - Test with a common username and weak password.
+#   - Test with empty username and password fields.
 
-Reminder: You must generate exactly **{limit}** approach(es). Do not exceed this number.
-"""
-
-
-
-human_high_high_level_planner_prompt = """
-*URI*: {uri}
-*Element*:
-{interaction}
-*Page Soup*:
-{page_soup}
+# Reminder: You must generate exactly **{limit}** approach(es). Do not exceed this number.
+# """
 
 
-Reminder: You must generate exactly **{limit}** approach(es). Do not exceed this number.
-"""
+# human_high_high_level_planner_prompt = """
+# *URI*: {uri}
+# *Element*:
+# {interaction}
+# *Page Soup*:
+# {page_soup}
 
-high_high_level_planner_prompt = ChatPromptTemplate(
-    [
-        ("system", system_high_high_level_planner_prompt),
-        ("human", human_high_high_level_planner_prompt),
-        ("placeholder", "{messages}"),
-    ]
-)
+
+# Reminder: You must generate exactly **{limit}** approach(es). Do not exceed this number.
+# """
+
+# high_high_level_planner_prompt = ChatPromptTemplate(
+#     [
+#         ("system", system_high_high_level_planner_prompt),
+#         ("human", human_high_high_level_planner_prompt),
+#         ("placeholder", "{messages}"),
+#     ]
+# )
 
 
 system_high_level_planner_prompt = """
-You are a professional web tester assigned to evaluate a specific element on a web application page.
+You are a professional web tester.  
+Your job is to break down **one high-level testing phase** into the *smallest set of UI actions* needed to complete it.
 
-Given a specific approach, create a plan of individual steps to test an interaction feature. The goal is to uncover the functionality of the element using the current approach.
+Input you receive
+─────────────────
+- *Phase* (string) - e.g. “Login with the credentials admin:password123”.
+- *URI*          - current page path.
+- *Page Soup*    - raw HTML of the current page (already loaded).
+- *Context*      - any extra info, such as existing session data or fixture values.
 
-This plan should:
-  - Be specific to the element, the page soup, and the current approach.
-  - Be minimal and not overly detailed, as it is just the initial plan.
-  - Generate **unique, realistic inputs** for each approach—avoid generic placeholders like "valid_username" or "invalid_password."
-  - *Focus solely on the actions to perform, without making any assumptions about expected behaviors or outcomes.*
-  - All test are analyzed, so any "verify" or "observe" steps are reduntant
+What to output
+──────────────
+Return a **PlanModel** with the structure:
 
-Input Generation Guidance:
-  - Only generate inputs if you are sure the target element exists on the page, do NOT make assumptions about potential input fields.
-  - **Valid Inputs**: Use unique and properly formatted usernames (e.g., "user_test_random32ab") and strong passwords adhering to security best practices (e.g., "SecurePass$123").
-  - **Likely-Taken Inputs**: Use common usernames (e.g., "admin", "user") or improperly formatted data that would trigger an error (e.g., no special characters for a password that requires them).
-  - **Invalid Inputs**: Test with invalid or improperly formatted data that should lead to an error (e.g., "`~&$#@/password").
-  
-*Important*:
-  - Do not include any steps that involve verifying specific behaviors or outcomes (e.g., avoid steps like "Verify that an error message is displayed").
-  - Do not make any assumptions about how web applications should behave.
-  - Generate the minimal amount of steps necessary to test the feature.
-  - Keep the steps minimal and action-oriented.
-  - **Do not include multiple actions that result in navigation** Once a navigation action is performed (e.g., clicking a button that changes the page), the plan should not include further actions on the original page.
+- phase:   the original phase string, verbatim.
+- plan:    an **array of strings**, each string being **one atomic UI step**.
 
-Keep in mind that the page is already loaded, and you have access to the page soup.
+Plan writing rules
+──────────────────
+1. **Stay within the phase.**  
+   Only include the steps strictly required to execute the phase description.
 
-Examples:
+2. **One navigation max.**  
+   Stop adding steps immediately after an action that causes a page transition.
 
-Example 1:
+3. **No checks / verifications.**  
+   Do *not* add “Verify…” or “Observe…” steps; analysis happens elsewhere.
 
-Input:
-- URI: /register
-- Element:
-  {{"name": "Register Form", "description": "A form to register a new user"}}
-- Approach: Test the registration form with valid inputs for username and password.
-- Page Soup: HTML code of the page
-- Context: -
+4. **Concrete, realistic data only.**  
+   Pull exact values from the phase text; do not invent additional inputs.
 
-Output:
-- PlanModel:
-  - approach: Test the registration form with valid inputs for username and password.
-  - plan:
-    - Fill in the username field with the text "user_test_123"
-    - Fill in the password field with the text "SecurePass$123"
-    - Check the "agree to terms and conditions" checkbox
-    - Click the register button
+5. **Be concise & imperative.**  
+   Each step must begin with a verb, e.g. “Click the login button”.
 
-Example 2:
+Examples
+────────
+Example 1
+Input Phase:  Login with the credentials admin:password123  
+Output Plan:
+  - Navigate to “/login”
+  - Fill in the username field with “admin”
+  - Fill in the password field with “password123”
+  - Click the “Log in” button
 
-Input:
-- URI: /login
-- Element:
-  {{"name": "Login Form", "description": "A form to log in to the application"}}
-- Approach: Test the login form with valid inputs.
-- Page Soup: HTML code of the page
-- Context: user_test_123:SecurePass$123 are valid credentials
+Example 2
+Input Phase:  Create a post with title "Hello World" and content "This is a test post."  
+Output Plan:
+  - Click the “New Post” button
+  - Fill in the title field with “Hello World”
+  - Fill in the content field with “This is a test post.”
+  - Click the “Publish” button
 
-Output:
-- PlanModel:
-  - approach: Test the login form with valid inputs.
-  - plan:
-    - Fill in the username field with the text "user_test_123"
-    - Fill in the password field with the text "SecurePass$123"
-    - Click the login button
-
-IMPORTANT: THE PLAN MUST BE A ARRAY OF STRINGS, EACH STRING REPRESENTING A SINGLE STEP TO EXECUTE.
-
+IMPORTANT: The **plan** value must be a JSON array (list) of strings, nothing else.
 """
+
 
 human_high_level_planner_prompt = """
 *URI*: {uri}
-*Element*:
-{interaction}
-*Approach*:
-{approach}
+
+*Phase*:
+{phase}
+
 *Page Soup*:
-```
+```html
 {page_soup}
 ```
 
-*Context*:
-{interaction_context}
-
 """
+# *Context*:
+# {phase_context}
 
 high_level_planner_prompt = ChatPromptTemplate(
     [
@@ -156,136 +141,70 @@ high_level_planner_prompt = ChatPromptTemplate(
     ]
 )
 
-
-system_execute_prompt = """
-You are a professional web tester assigned to execute a single step of a plan to test an interaction feature.
-
-This is the current testing approach:
-
-{approach}
-
-This is the entire plan:
-
-{plan}
-
-The feature you are testing is:
-
-{interaction}
-Only execute a single step of this plan. The page is already loaded and you have access to the page soup.
-Page Soup:
-{page_soup}
-"""
-
-
-human_execute_prompt = """
-You are currently executing the following step:
-
-{step}
-
-Only finish when you have completed the step successfully.
-"""
-
-execute_prompt = ChatPromptTemplate(
-    [
-        ("system", system_execute_prompt),
-        ("human", human_execute_prompt),
-        ("placeholder", "{messages}"),
-    ]
-)
-
 system_react_agent_prompt = """
-You are tasked with interacting with a web page to test a specific feature.
+You are tasked with performing one specific UI action on a web page as part of executing a *testing phase*.
 
 Report to the human as helpfully and accurately as possible. You have access to the following tools:
 {tools}
 
-*Important*: When specifying tool actions, the input must always be structured in a nested JSON object. Avoid placing the tool input directly as a string. Instead, include any required parameters (such as identifiers, methods, etc.) inside a key-value format, as shown below. This ensures that tools receive the correct inputs.
+JSON-only actions
+─────────────────
+• Every response **must** be a single JSON object.  
+• Provide exactly **one** of the following action names in the "action" field:
+  - {tool_names}
+  - "Final Answer"
 
-You must use a JSON blob to specify a tool by providing an `action` key (tool name) and an `action_input` key (tool input). Always ensure the input fields are organized correctly within the `action_input`.
+Structure:
 
-Valid "action" values: "Final Answer" or {tool_names}
-
-Format:
-
-```
 {{
-  "action": $TOOL_NAME,
+  "action": $TOOL_NAME | "Final Answer",
   "action_input": {{
     "key_1": "value_1",
     "key_2": "value_2",
     ...
   }}
 }}
-```
 
-*Provide only ONE action per $JSON_BLOB*. Example format:
+⚠️  *Never* put the tool input directly as a string—always wrap parameters in
+     the "action_input" object.
 
-```
-{{
-  "action": $TOOL_NAME,
-  "action_input": {{
-    "xpath_identifier": "//input[@aria-label='Submit']",
-    "using_javascript": true
-  }}
-}}
-```
+Completion format
+─────────────────
+When the task is done (or cannot be done after 5 attempts), respond with:
 
-Follow this format:
-
-Task: input task to complete
-Thought: consider previous and subsequent steps
-Action:
-```
-$JSON_BLOB
-```
-Observation: action result
-Thought: consider previous and subsequent steps
-Action:
-```
-$JSON_BLOB
-```
-Observation: action result
-... (repeat Thought/Action/Observation N times)
-Thought: I have completed the current task / I was unable to complete the current task
-Action:
-```
 {{
   "action": "Final Answer",
   "action_input": {{
-    "result": "I have completed the current task (add details as to what was done) / I was unable to complete the current task (add details as to why if applicable)",
-    "status": "Status of the individiual task (either 'success', 'failure', or 'incomplete')"
+    "result": "<what happened or why it failed>",
+    "status": "<'success' | 'failure' | 'incomplete'>"
   }}
 }}
-```
-Never include ```json in your response.
 
-Begin! *Reminder to ALWAYS respond with a valid json blob* of a single action. Use tools if necessary.
-If you have completed the task, respond with the final answer directly.
+Do **not** include ```json fences in any reply.
+
+Begin!  *Always respond with exactly one valid JSON blob.*
 """
 
 human_react_agent_prompt = """
 Website source page:
-```
+```html
 {page_soup}
 ```
 
-The feature you are testing is:
-{interaction}
+Testing Phase:
+{phase}
 
-The approach you are using is:
-{approach}
-
-Your plan is:
+Full Plan:
 {plan_str}
 
-The specific task you are now executing is: *{task}*
+The specific plan step you are executing now is: {task}
 
-IMPORTANT: ONLY EXECUTE THIS SPECIFIC TASK. DO NOT DEVIATE FROM IT AND DO NOT SOLVE OTHER TASKS.
+IMPORTANT: Execute only this step—do not jump ahead or perform other steps.
 
-Try to solve the task carefully and accurately. If you are unsuccessful after 5 attempts, respond with the status 'failure' and provide a detailed explanation of the steps you have taken.
+If you cannot complete it after 5 tries, return status "failure" with details.
 
-Thought: {agent_scratchpad}
-(reminder to respond in a JSON blob no matter what)
+Thought trace: {agent_scratchpad}
+(reminder: respond with a single JSON blob)
 """
 
 react_agent_prompt = ChatPromptTemplate.from_messages(
@@ -296,57 +215,62 @@ react_agent_prompt = ChatPromptTemplate.from_messages(
 )
 
 system_high_level_replanner_prompt = """
-You are a professional web tester assigned to evaluate a specific element on a web application page.
+You are a professional web tester.
 
-Given a specific approach, the previous plan, and the observed steps, the goal is to further test the functionality of the element using the current approach.
+Goal
+────
+Given
+  • one *testing phase*  
+  • the previous plan for that phase  
+  • the steps that were actually executed  
+  • the HTML diff after execution  
 
-You are tasked with evaluating the following feature of a web application:
-{interaction}
+decide whether more UI actions are needed to **complete the phase**.  
+If so, output a revised plan. If not, state that the test is finished.
 
-*Important*:
-- Consider any new elements or changes in the page source difference that indicate further interaction is needed to fully test the feature.
-- Include interactions with these new elements in your new plan if necessary.
-- Only return a new plan if the previous plan did not fully test the feature.
-- If no further interaction is needed and the plan is complete, respond to the user indicating the test is finished.
-- Keep in mind that the target interaction may not be fully functional or the current approach may not be applicable to fully interact with the element. In such cases, do not generate a new plan and inform the user that the test is complete.
+Rules
+─────
+1. **Focus on the phase.**  
+   All new steps must relate directly to completing the same phase.
 
-Any new plans should:
-  - Contain the necessary steps to test the feature, including previous and additional steps.
-  - Be specific to the element, the page soup, and the current approach.
-  - Generate **unique, realistic inputs** for each approach—avoid generic placeholders like "valid_username" or "invalid_password."
-  - *Focus solely on the actions to perform, without making any assumptions about expected behaviors or outcomes.*
-  - All test are analyzed, so any "verify" or "observe" steps are redundant
+2. **React to new UI.**  
+   If the page diff shows new interactive elements needed to finish the phase, add steps that interact with them.
 
-Input Generation Guidance:
-  - Only generate inputs if you are sure the target element exists on the page, do NOT make assumptions about potential input fields.
-  - **Valid Inputs**: Use unique and properly formatted usernames (e.g., "user_test_random32ab") and strong passwords adhering to security best practices (e.g., "SecurePass$123").
-  - **Likely-Taken Inputs**: Use common usernames (e.g., "admin", "user") or improperly formatted data that would trigger an error (e.g., no special characters for a password that requires them).
-  - **Invalid Inputs**: Test with invalid or improperly formatted data that should lead to an error (e.g., "`~&$#@/password").
-  - The type of input should be based on the given approach
+3. **No verification steps.**  
+   Do *not* add “Verify…” or “Observe…” actions; analysis happens elsewhere.
+
+4. ** One navigation max.**  
+   Stop adding steps immediately after an action that triggers a page transition.
+
+5. **Concrete data only.**  
+   Re-use literal values from the phase text or newly discovered fields—do not invent placeholders.
+
+6. **Return formats**  
+   • If more work is needed, reply with a *PlanModel*:
+       - phase: the phase string, verbatim  
+       - plan: JSON array of new **full plan steps** (include previous steps + additions)  
+   • If nothing else is required, reply exactly: **"Phase complete — no further interaction needed."**
 """
 
 human_high_level_replanner_prompt = """
-Your approach is:
-{approach}
+*Phase*:
+{phase}
 
-Your previous plan was:
+*Previous Plan*:
 {previous_plan}
 
-You performed the following steps:
+*Executed Steps*:
 {steps}
 
-Keep in mind that the specific output of the tools has been shortened for the sake of readability. For generating the final output for the user, this data will be provided in full.
-
-You observed these outgoing requests:
+*Outgoing Requests*:
 {outgoing_requests}
 
-The page source difference before and after interaction:
-```
+*HTML Diff (before → after)*:
+```diff
 {page_source_diff}
 ```
 
-Reminder: Generate a new plan if new inputs fields or elements have been discovered in the page source that require interaction to sufficiently test the feature.
-If no further interaction is needed, inform the user that the test is complete.
+Reminder: Propose a new plan only if newly discovered input fields or elements must still be exercised to fulfil the phase. Otherwise, state that the phase is complete.
 """
 
 
@@ -358,44 +282,41 @@ high_level_replanner_prompt = ChatPromptTemplate.from_messages(
 )
 
 system_reporter_prompt = """
-You are a professional web tester assigned to evaluate a specific feature on a web application page.
+You are a professional web tester documenting the results of repeated executions of a single **testing phase** on a web application.
 
-Your task is to create a detailed, aggregated report of the feature's performance, highlighting key behavior and any issues found during testing.
-Additionally you must decide what information should be passed to future interaction tests. Include this information in the new_interaction_context field.
+Your deliverable is a concise, aggregated report that:
 
-**Important**:
-  - Summarize how the feature behaves across different tests and describe how the element functions and the server's response from the client side.
-  - Pay attention to any outgoing requests, including their details, and document any differences or patterns observed.
-  - Report unusual behaviors or errors found during testing.
-  - Keep the report brief and focused on key findings and issues.
-  - Only return important and *complete* context information that will be useful for future interactions.
-  - For example, if a registration successfully completes, the context information should include the username and password used for the registration: "Valid user credentials: username: user_test_123, password: SecurePass$123"
+• Summarises how the phase behaves from the client side.  
+• Highlights notable outgoing requests (method, path, response code, payload patterns).  
+• Mentions errors, anomalies, or unusual UI changes.  
+• Stays focused—only key findings, no verbose prose.
 
-The tested feature is: **{interaction}**
+**Pass-forward data**  
+Decide what must be retained for future phases (e.g. issued auth cookies, valid IDs, created resources).  
+Return it in a field called **new_phase_context**; include *only* information that is complete and clearly useful.
 
+Phase under test: **{phase}**  
 URI: **{uri}**
 
-This report consolidates multiple tests that assess different aspects of the feature, combining their observations into one cohesive document.
+(The report consolidates observations from multiple runs of this same phase.)
 """
 
 human_reporter_prompt = """
-## Test Approach Overview
-This test used the following approach: **{approach}**
+## Phase
+{phase}
 
-### Test Plan
-The test followed this plan:
+## Plan Executed
 {plan}
 
-### Steps Performed:
-Here are the steps that were taken during this test:
+## Steps Performed
 {steps}
 
-### Outgoing Requests:
-The following outgoing requests were observed during this interaction:
+## Outgoing Requests
 {outgoing_requests}
 
-### Page Source Changes:
-Comparing the page source before and after the interaction, the following differences were noted:
+## Page Source Diff
+```diff
 {page_source_diff}
+```
 
 """
