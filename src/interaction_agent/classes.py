@@ -129,7 +129,7 @@ class PlanModel(BaseModel):
     """Model for representing the plan for a single approach."""
 
     approach: str = Field(description="The approach for the interaction feature.")
-    plan: List[str] = Field(description="The step-by-step plan for this approach.")
+    plan: List[str] = Field(description="The step-by-step plan for this approach. As a List")
 
 
 class CompletedTask(BaseModel):

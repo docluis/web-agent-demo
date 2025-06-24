@@ -11,7 +11,7 @@ class ApiModel(BaseModel):
     query_string: Optional[str] = Field(description="The query string of the API call")
     url_path_params: Optional[Dict[str, str]] = Field(description="The URL path parameters of the API call")
     method: str = Field(description="The HTTP method used in the API call, such as 'GET' or 'POST'")
-    headers: Dict[str, str] = Field(description="The headers sent with the API call")
+    headers: Optional[Dict[str, str]] = Field(description="The headers sent with the API call")
     postData: Optional[Dict[str, str]] = Field(description="The data sent with the API call, key-value pairs")
 
 class ApiModelList(BaseModel):

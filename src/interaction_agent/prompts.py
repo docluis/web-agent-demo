@@ -128,6 +128,8 @@ Output:
     - Fill in the password field with the text "SecurePass$123"
     - Click the login button
 
+IMPORTANT: THE PLAN MUST BE A ARRAY OF STRINGS, EACH STRING REPRESENTING A SINGLE STEP TO EXECUTE.
+
 """
 
 human_high_level_planner_prompt = """
