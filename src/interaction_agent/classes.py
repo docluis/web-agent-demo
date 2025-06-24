@@ -118,14 +118,14 @@ AnyOutput = Union[
 
 
 class PlanModel(BaseModel):
-    """Model for representing the plan for a single approach."""
+    """Model for representing the plan for a single phase."""
 
     phase: str = Field(description="The phase of the flow to be tested.")
-    plan: List[str] = Field(description="The step-by-step plan for this approach. As a List")
+    plan: List[str] = Field(description="The step-by-step plan for this phase. As a List")
 
 
 class CompletedTask(BaseModel):
-    """Model for representing a completed step of a plan for a single approach."""
+    """Model for representing a completed step of a plan for a single phase."""
 
     task: str = Field(description="The task that was executed.")
     status: str = Field(default="pending", description="The status of the task.")
@@ -134,17 +134,18 @@ class CompletedTask(BaseModel):
 
 
 class TestModel(BaseModel):
-    """Model for representing a test for a single approach."""
+    """Model for representing a test for a single phase."""
 
-    approach: str = Field(description="The approach for the interaction feature.")
-    plan: PlanModel = Field(description="The plan for this approach.")
-    steps: List[CompletedTask] = Field(description="The steps executed for this approach.")
+    # approach: str = Field(description="The approach for the interaction feature.")
+    phase: str = Field(description="The phase of the flow to be tested.")
+    plan: PlanModel = Field(description="The plan for this phase.")
+    steps: List[CompletedTask] = Field(description="The steps executed for this phase.")
     soup_before_str: str = Field(description="The soup before the test.")
     soup_after_str: str = Field(default=None, description="The soup after the test.")
     # outgoing_requests_before: List[Dict] = Field(description="The outgoing requests before the test.")
     outgoing_requests_after: List[ApiModel] = Field(default=None, description="The outgoing requests after the test.")
     # TODO: add a flag so the replanner does not need to check this test after checked once and replan is not needed
-    checked: bool = Field(default=False, description="Whether the test has been checked for this approach.")
+    checked: bool = Field(default=False, description="Whether the test has been checked for this phase.")
     in_report: bool = Field(default=False, description="Whether the test is in the final report.")
 
 

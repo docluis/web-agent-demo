@@ -134,7 +134,7 @@ class InteractionAgent:
             with Live(refresh_per_second=10) as live:
                 high_level_planner_log = HighLevelPlannerLog(state["phases"])
                 for i, phase in enumerate(state["phases"]):
-                    high_level_planner_log.update_approach(i, "running")
+                    high_level_planner_log.update_phase(i, "running")
                     live.update(high_level_planner_log.render())
                     plan = high_level_planner.invoke(
                         {
@@ -146,7 +146,7 @@ class InteractionAgent:
                         }
                     )
                     plans.append(plan)
-                    high_level_planner_log.update_approach(i, "done")
+                    high_level_planner_log.update_phase(i, "done")
                     live.update(high_level_planner_log.render())
 
             return {"plans": plans}
@@ -168,13 +168,13 @@ class InteractionAgent:
                     )
                     solver_executor = AgentExecutor(agent=solver, tools=tools)
                     logger.debug("")
-                    logger.debug(f"#### Next Approach: {plan.approach}")
-                    executor_log.update_approach(i, "running")
+                    logger.debug(f"#### Next Phase: {plan.phase}")
+                    executor_log.update_phase(i, "running")
                     live.update(executor_log.render_tasks())
                     soup_before = BeautifulSoup(self.cf.driver.page_source, "html.parser")
                     soup_before = filter_html(soup_before)
                     test = TestModel(
-                        approach=plan.approach, steps=[], soup_before_str=soup_before.prettify(), plan=plan
+                        phase=plan.phase, steps=[], soup_before_str=soup_before.prettify(), plan=plan
                     )
                     self.cf.driver.get(f"{self.cf.target}{uri}")
                     time.sleep(self.cf.selenium_rate)
@@ -214,7 +214,7 @@ class InteractionAgent:
                     # p_reqs_llm = llm_parse_requests_for_apis(self.cf, json.dumps(p_reqs, indent=4))
                     p_reqs_llm = self.llm_page_request_parser.parse_apis(json.dumps(p_reqs, indent=4))
                     test.outgoing_requests_after = p_reqs_llm
-                    executor_log.update_approach(i, "done")
+                    executor_log.update_phase(i, "done")
                     live.update(executor_log.render_tasks())
 
                     tests.append(test)
@@ -241,7 +241,7 @@ class InteractionAgent:
                 for i, test in enumerate(tests_to_check):
                     high_level_replanner_log.update_test(i, "running", None)
                     live.update(high_level_replanner_log.render())
-                    logger.debug(f"Replanning for approach: {test.approach}")
+                    logger.debug(f"Replanning for phase: {test.phase}")
                     uri = state["uri"]
                     interaction = state["interaction"]
                     page_source_diff = unified_diff(

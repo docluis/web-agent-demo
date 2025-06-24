@@ -31,7 +31,7 @@ class ExecutorLog:
     def _init_data(self, plans: List[PlanModel]):
         data = []
         for plan in plans:
-            this_test = {"approach": plan.approach, "tasks": [], "status": "waiting"}
+            this_test = {"phase": plan.phase, "tasks": [], "status": "waiting"}
             for task in plan.plan:
                 this_test["tasks"].append({"name": task, "status": "waiting"})
             data.append(this_test)
@@ -41,7 +41,7 @@ class ExecutorLog:
         table = get_initial_table()
         for test in self.data:
             status_display, style = get_status_display(test["status"])
-            table.add_row(Text(f"Approach: {test['approach']}", style=style), status_display)
+            table.add_row(Text(f"phase: {test['phase']}", style=style), status_display)
 
             if test["status"] in ["running", "done"]:
                 for task in test["tasks"]:
@@ -50,11 +50,11 @@ class ExecutorLog:
 
         return table
 
-    def update_approach(self, approach_index: int, status: str):
-        self.data[approach_index]["status"] = status
+    def update_phase(self, phase_index: int, status: str):
+        self.data[phase_index]["status"] = status
 
-    def update_task(self, approach_index: int, task_index: int, status: str):
-        self.data[approach_index]["tasks"][task_index]["status"] = status
+    def update_task(self, phase_index: int, task_index: int, status: str):
+        self.data[phase_index]["tasks"][task_index]["status"] = status
 
 
 class HighHighLevelPlannerLog:
@@ -67,28 +67,28 @@ class HighHighLevelPlannerLog:
     def render(self) -> Table:
         table = get_initial_table()
         status_display, style = get_status_display(self.status)
-        table.add_row(Text("Generating Approaches", style=style), status_display)
+        table.add_row(Text("Generating phasees", style=style), status_display)
         return table
 
 
 class HighLevelPlannerLog:
-    def __init__(self, approaches: List[str]):
-        self.data = self._init_data(approaches)
+    def __init__(self, phasees: List[str]):
+        self.data = self._init_data(phasees)
 
-    def _init_data(self, approaches: List[str]):
+    def _init_data(self, phasees: List[str]):
         data = []
-        for approach in approaches:
-            data.append({"approach": approach, "status": "waiting"})
+        for phase in phasees:
+            data.append({"phase": phase, "status": "waiting"})
         return data
 
-    def update_approach(self, approach_index: int, status: str):
-        self.data[approach_index]["status"] = status
+    def update_phase(self, phase_index: int, status: str):
+        self.data[phase_index]["status"] = status
 
     def render(self) -> Table:
         table = get_initial_table()
-        for approach in self.data:
-            status_display, style = get_status_display(approach["status"])
-            table.add_row(Text(f"Generating Plan for Approach: {approach['approach']}", style=style), status_display)
+        for phase in self.data:
+            status_display, style = get_status_display(phase["status"])
+            table.add_row(Text(f"Generating Plan for phase: {phase['phase']}", style=style), status_display)
         return table
 
 
@@ -99,7 +99,7 @@ class HighLevelReplannerLog:
     def _init_data(self, tests_to_check: List[TestModel]):
         data = []
         for test in tests_to_check:
-            data.append({"approach": test.approach, "status": "waiting", "result": None})
+            data.append({"phase": test.phase, "status": "waiting", "result": None})
         return data
 
     def update_test(self, test_index: int, status: str, result: str | None):
@@ -110,7 +110,7 @@ class HighLevelReplannerLog:
         table = get_initial_table()
         for test in self.data:
             status_display, style = get_status_display(test["status"])
-            table.add_row(Text(f"Approach: {test['approach']}", style=style), status_display)
+            table.add_row(Text(f"phase: {test['phase']}", style=style), status_display)
 
             if test["status"] in ["done"] and test["result"] is not None:
                 table.add_row(Text(f"  • Result: {test['result']}", style=style), "")
